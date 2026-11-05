@@ -1,4 +1,4 @@
-package main
+package internal
 
 import (
 	"context"
@@ -6,15 +6,13 @@ import (
 	"sync"
 
 	"github.com/jackc/pgx/v5/pgxpool"
-	"github.com/sirupsen/logrus"
 )
 
 var once sync.Once
 var db *pgxpool.Pool
-var log *logrus.Entry = GetLogger().WithField("component", "database")
 
-func new(cfg DatabaseConfig) (*pgxpool.Pool, error) {
-	var dsn string = fmt.Sprintf("host=%s user=%s password=%s dbname=%s port=%s",
+func new(ctx context.Context, cfg DatabaseConfig) (*pgxpool.Pool, error) {
+	var dsn string = fmt.Sprintf("host=%s user=%s password=%s dbname=%s port=%d",
 		cfg.Host,
 		cfg.User,
 		cfg.Password,
@@ -22,7 +20,6 @@ func new(cfg DatabaseConfig) (*pgxpool.Pool, error) {
 		cfg.Port,
 	)
 
-	ctx := context.Background()
 	db, err := pgxpool.New(ctx, dsn)
 	if err != nil {
 		return nil, fmt.Errorf("failed to create a new db pool %s: %w", cfg.Host, err)
@@ -36,7 +33,7 @@ func new(cfg DatabaseConfig) (*pgxpool.Pool, error) {
 	return db, nil
 }
 
-func NewDB(cfg DatabaseConfig) (*pgxpool.Pool, error) {
+func NewDB(ctx context.Context, cfg DatabaseConfig) (*pgxpool.Pool, error) {
 	var err error
 
 	if db != nil {
@@ -44,7 +41,7 @@ func NewDB(cfg DatabaseConfig) (*pgxpool.Pool, error) {
 	}
 
 	once.Do(func() {
-		db, err = new(cfg)
+		db, err = new(ctx, cfg)
 	})
 
 	return db, err

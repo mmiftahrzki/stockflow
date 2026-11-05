@@ -1,10 +1,9 @@
-package main
+package internal
 
 import "github.com/spf13/viper"
 
 type AppConfig struct {
 	Port       uint16
-	AdminEmail string
 }
 
 type baseConfig struct {
@@ -26,7 +25,7 @@ func LoadConfig() (baseConfig, error) {
 
 	viper.SetConfigName("config")
 	viper.SetConfigType("json")
-	viper.AddConfigPath(".")
+	viper.AddConfigPath("./../..")
 
 	if err := viper.ReadInConfig(); err != nil {
 		return cfg, err
