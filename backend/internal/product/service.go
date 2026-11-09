@@ -8,8 +8,14 @@ import (
 	"github.com/sirupsen/logrus"
 )
 
+type stockMovement struct{}
 type Service interface {
-	CreateProduct(ctx context.Context, command createCommand) error
+	List(ctx context.Context, query QueryList) ([]modelProduct, error)
+	Create(ctx context.Context, command commandCreate) error
+	Update(ctx context.Context, command commandUpdate) error
+	Delete(ctx context.Context, command commandDelete) error
+	CreateStock(ctx context.Context, command commandCreateStock) error
+	GetMovements(ctx context.Context, query QueryMovements) ([]stockMovement, error)
 }
 
 type service struct {
@@ -25,7 +31,7 @@ func newService(r Repo) Service {
 	return svc
 }
 
-func (svc *service) CreateProduct(ctx context.Context, command createCommand) error {
+func (svc *service) Create(ctx context.Context, command commandCreate) error {
 	err := ctx.Err()
 	if err != nil {
 		return err
@@ -45,4 +51,38 @@ func (svc *service) CreateProduct(ctx context.Context, command createCommand) er
 	}
 
 	return nil
+}
+
+func (svc *service) List(ctx context.Context, query QueryList) ([]modelProduct, error) {
+	products := []modelProduct{}
+
+	productSqls, err := svc.repo.Select(ctx, query.search, query.page, query.limit)
+	if err != nil {
+		return nil, err
+	}
+
+	for _, productSql := range productSqls {
+		customer := modelProduct{
+			Id:        int(productSql.id.Int16),
+			SKU:       productSql.sku.String,
+			Name:      productSql.name.String,
+			Price:     int(productSql.price.Int16),
+			Stock:     int(productSql.stock.Int16),
+			IsActive:  productSql.is_active.Bool,
+			CreatedAt: productSql.created_at.Time,
+		}
+
+		products = append(products, customer)
+	}
+
+	return products, nil
+}
+
+func (svc *service) Update(ctx context.Context, command commandUpdate) error { panic(("implement me")) }
+func (svc *service) Delete(ctx context.Context, command commandDelete) error { panic(("implement me")) }
+func (svc *service) CreateStock(ctx context.Context, command commandCreateStock) error {
+	panic(("implement me"))
+}
+func (svc *service) GetMovements(ctx context.Context, query QueryMovements) ([]stockMovement, error) {
+	panic(("implement me"))
 }
